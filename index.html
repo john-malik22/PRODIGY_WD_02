@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stopwatch App</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #141e30, #243b55);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      background: #1f2937;
+      padding: 2rem;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+      width: 300px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .time {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .buttons button,
+    .mode-switch {
+      margin: 0.3rem;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .start {
+      background: #28a745;
+      color: white;
+    }
+
+    .stop {
+      background: #dc3545;
+      color: white;
+    }
+
+    .reset {
+      background: #ffc107;
+      color: black;
+    }
+
+    .lap {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .buttons button:hover,
+    .mode-switch:hover {
+      filter: brightness(1.1);
+    }
+
+    .laps {
+      margin-top: 1rem;
+      max-height: 120px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .laps p {
+      margin: 0.3rem 0;
+      padding: 0.3rem;
+      background: #374151;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.light-mode {
+      background: linear-gradient(to right, #f8fafc, #e2e8f0);
+      color: #222;
+    }
+
+    .container.light-mode {
+      background: #fff;
+      color: #222;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .light-mode .time {
+      color: #222;
+    }
+
+    .light-mode .start {
+      background: #b7e4c7;
+      color: #222;
+    }
+
+    .light-mode .stop {
+      background: #ffb3b3;
+      color: #222;
+    }
+
+    .light-mode .reset {
+      background: #ffe066;
+      color: #222;
+    }
+
+    .light-mode .lap {
+      background: #b5d8f8;
+      color: #222;
+    }
+
+    .light-mode .laps p {
+      background: #f1f5f9;
+      color: #222;
+    }
+
+    .mode-switch {
+      background: #888;
+      color: #fff;
+      float: right;
+      margin-bottom: 1rem;
+    }
+
+    .light-mode .mode-switch {
+      background: #e2e8f0;
+      color: #222;
+    }
+  </style>
+</head>
+
+<body>
+  <button class="mode-switch global-mode-switch" id="globalModeSwitch" onclick="toggleMode()"
+    style="position:fixed;top:24px;right:32px;z-index:1000;">
+    🌙 Dark Mode
+  </button>
+  <div class="container" id="container">
+    <div class="time" id="display">00:00:00.00</div>
+    <div class="buttons">
+      <button class="start" onclick="startStopwatch()">Start</button>
+      <button class="stop" onclick="pauseStopwatch()">Pause</button>
+      <button class="reset" onclick="resetStopwatch()">Reset</button>
+      <button class="lap" onclick="recordLap()">Lap</button>
+    </div>
+    <div class="laps" id="laps"></div>
+  </div>
+
+  <script>
+    let startTime, updatedTime, difference, timerInterval;
+    let isRunning = false;
+    let laps = [];
+
+    const display = document.getElementById('display');
+    const lapsContainer = document.getElementById('laps');
+    const modeSwitch = document.getElementById('globalModeSwitch');
+    const container = document.getElementById('container');
+
+    function formatTime(ms) {
+      const date = new Date(ms);
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+      const milliseconds = String(Math.floor(ms % 1000 / 10)).padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+    }
+
+    function updateDisplay() {
+      updatedTime = Date.now() - startTime;
+      display.textContent = formatTime(updatedTime);
+    }
+
+    function startStopwatch() {
+      if (!isRunning) {
+        startTime = Date.now() - (difference || 0);
+        timerInterval = setInterval(updateDisplay, 10);
+        isRunning = true;
+      }
+    }
+
+    function pauseStopwatch() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        difference = Date.now() - startTime;
+        isRunning = false;
+      }
+    }
+
+    function resetStopwatch() {
+      clearInterval(timerInterval);
+      startTime = null;
+      difference = 0;
+      isRunning = false;
+      display.textContent = "00:00:00.00";
+      laps = [];
+      lapsContainer.innerHTML = '';
+    }
+
+    function recordLap() {
+      if (isRunning) {
+        const lapTime = formatTime(Date.now() - startTime);
+        laps.push(lapTime);
+        const lapElement = document.createElement('p');
+        lapElement.textContent = `Lap ${laps.length}: ${lapTime}`;
+        lapsContainer.prepend(lapElement);
+      }
+    }
+    function toggleMode() {
+      document.body.classList.toggle('light-mode');
+      container.classList.toggle('light-mode');
+      if (document.body.classList.contains('light-mode')) {
+        modeSwitch.textContent = "🌞 Light Mode";
+      } else {
+        modeSwitch.textContent = "🌙 Dark Mode";
+      }
+    }
+  </script>
+</body>
+
+</html>
